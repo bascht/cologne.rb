@@ -1,32 +1,52 @@
 include apt
 
-class colognerb {
-  exec { 'apt-get update': command => '/usr/bin/apt-get update' }
+class rvmruby {
+  $version = 'ruby-1.9.3-p125'
 
-  package { "git-core": ensure => present }
-  package { "nginx": ensure => present, require => Exec['apt-get update'] }
-
-  file { "/etc/timezone": content => "Europe/Berlin" }
-  file { "/etc/localtime": source => "/usr/share/zoneinfo/Europe/Berlin" }
-  file { "/etc/ssh/sshd_config": source => "/vagrant/manifests/files/sshd_config" }
-
-  service { "nginx": ensure => running, require => Package["nginx"] }
-
-  file { "/etc/nginx/sites-enabled/default": ensure => absent, require => Package["nginx"] } 
-  file { "/etc/nginx/sites-available/cologne.onruby.dev":
-    ensure => link, 
-    notify => Service["nginx"],
-    require => Package["nginx"],
-    target => "/vagrant/manifests/files/cologne.onruby.dev"
+  rvm::define::version { $rvmruby::version:
+    ensure => 'present',
+    system => 'false'
   }
-  file { "/etc/nginx/sites-enabled/cologne.onruby.dev":
-    ensure => link, 
-    notify => Service["nginx"],
-    require => Package["nginx"],
-    target => "/etc/nginx/sites-available/cologne.onruby.dev"
+
+  rvm::define::user { 'vagrant': }
+}
+
+class onruby {
+  rvm::define::gem { "bundler": 
+    ruby_version => $rvmruby::version,
+    user => 'vagrant',
+    gemset => 'on_ruby',
+    gem_version => "1.2.0.pre.1"
+  }
+
+  rvm::define::gemset { "on_ruby": 
+    ruby_version => $rvmruby::version,
+    user => 'vagrant'
+  }
+
+  exec { "git_clone_onruby":
+      cwd => "/home/vagrant",
+      user => "vagrant", 
+      command => "/usr/bin/git clone git://github.com/phoet/on_ruby.git",
+      creates => "/home/vagrant/on_ruby",
+      require => Package["git-core"]
   }
 }
 
-node "cologne.onruby.dev" {
-  include colognerb
+node "cologne.onruby" {
+  include rvmruby
+  include nginx
+
+  include onruby
+
+  exec { 'apt-update': command => '/usr/bin/apt-get update' }
+  Exec["apt-update"] -> Package <| |>
+
+  package { "git-core": ensure => present }
+  package { "vim":      ensure => present }
+
+  user { "vagrant":     ensure => present }
+
+  file { "/etc/timezone": content => "Europe/Berlin" }
+  file { "/etc/localtime": source => "/usr/share/zoneinfo/Europe/Berlin" }
 }

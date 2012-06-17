@@ -1,9 +1,9 @@
-[submodule "modules/apt"]
-	path = modules/apt
-	url = git://github.com/puppetlabs/puppet-apt.git
 [submodule "modules/stdlib"]
 	path = modules/stdlib
 	url = git://github.com/puppetlabs/puppetlabs-stdlib.git
 [submodule "modules/rvm"]
 	path = modules/rvm
-	url = git://github.com/jfryman/puppet-rvm.git
+	url = git://github.com/bascht/puppet-rvm.git
+[submodule "modules/apt"]
+	path = modules/apt
+	url = git://github.com/puppetlabs/puppetlabs-apt.git

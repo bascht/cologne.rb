@@ -1,0 +1,19 @@
+upstream thin {
+  server 127.0.0.1:3000;
+}
+server {
+  server_name cologne.onruby.dev;
+  root /vagrant/;
+
+  location / {
+      proxy_set_header  X-Real-IP  $remote_addr;
+      proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header  Host $http_host;
+      proxy_redirect    off;
+      try_files  $uri $uri/index.html $uri.html @thin;
+  }
+
+  location @thin {
+      proxy_pass http://thin;
+  }
+}
